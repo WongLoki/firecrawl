@@ -1,8 +1,9 @@
+version: 1
 services:
-  - name: firecrawl-api
-    type: web
+  - type: web
+    name: firecrawl-api
     env: docker
-    dockerfilePath: ./apps/api/Dockerfile
+    dockerfilePath: ./apps/api/Dockerfile # 确保这个路径是正确的
     dockerContext: ./apps/api
     envVars:
       - key: REDIS_URL
@@ -17,71 +18,39 @@ services:
           property: connectionString
       - key: PLAYWRIGHT_MICROSERVICE_URL
         value: https://firecrawl-playwright.onrender.com
-      - key: USE_DB_AUTHENTICATION
-      - key: PORT
-        value: 3002
-      - key: NUM_WORKERS_PER_QUEUE
-      - key: OPENAI_API_KEY
-      - key: OPENAI_BASE_URL
-      - key: MODEL_NAME
-        value: gpt-4o
-      - key: SLACK_WEBHOOK_URL
-      - key: LLAMAPARSE_API_KEY
-      - key: LOGTAIL_KEY
-      - key: BULL_AUTH_KEY
-      - key: TEST_API_KEY
-      - key: POSTHOG_API_KEY
-      - key: POSTHOG_HOST
-      - key: SUPABASE_ANON_TOKEN
-      - key: SUPABASE_URL
-      - key: SUPABASE_SERVICE_TOKEN
-      - key: SCRAPING_BEE_API_KEY
-      - key: HOST
-        value: 0.0.0.0
-      - key: SELF_HOSTED_WEBHOOK_URL
-      - key: LOGGING_LEVEL
-    startCommand: pnpm run start:production
+      # ... 其他环境变量 ...
+    buildCommand: docker build -t firecrawl-api ./apps/api
+    startCommand: docker run firecrawl-api
 
-  - name: firecrawl-worker
-    type: worker
+  - type: worker
+    name: firecrawl-worker
     env: docker
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: ./apps/api
     envVars:
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: firecrawl-redis
-          property: connectionString
-      - key: REDIS_RATE_LIMIT_URL
-        fromService:
-          type: redis
-          name: firecrawl-redis
-          property: connectionString
-      - key: PLAYWRIGHT_MICROSERVICE_URL
-        value: https://firecrawl-playwright.onrender.com
-      # ... (其他环境变量与 firecrawl-api 相同)
-    startCommand: pnpm run workers
+      # ... 环境变量 ...
+    buildCommand: docker build -t firecrawl-worker ./apps/api
+    startCommand: docker run firecrawl-worker pnpm run workers
 
-  - name: firecrawl-playwright
-    type: web
+  - type: web
+    name: firecrawl-playwright
     env: docker
     dockerfilePath: ./apps/playwright-service/Dockerfile
     dockerContext: ./apps/playwright-service
     envVars:
       - key: PORT
         value: 3000
-      - key: PROXY_SERVER
-      - key: PROXY_USERNAME
-      - key: PROXY_PASSWORD
-      - key: BLOCK_MEDIA
+      # ... 其他环境变量 ...
+    buildCommand: docker build -t firecrawl-playwright ./apps/playwright-service
+    startCommand: docker run -p 3000:3000 firecrawl-playwright
 
-  - name: firecrawl-redis
-    type: redis
+  - type: redis
+    name: firecrawl-redis
     ipAllowList: []
     plan: free
 
-databases:
-  - name: firecrawl-db
-    databaseName: firecrawl
-    user: firecrawl
+# 如果需要数据库，可以取消注释以下部分
+# databases:
+#   - name: firecrawl-db
+#     databaseName: firecrawl
+#     user: firecrawl
