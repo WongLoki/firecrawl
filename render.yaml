@@ -1,0 +1,87 @@
+services:
+  - name: firecrawl-api
+    type: web
+    env: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: firecrawl-redis
+          property: connectionString
+      - key: REDIS_RATE_LIMIT_URL
+        fromService:
+          type: redis
+          name: firecrawl-redis
+          property: connectionString
+      - key: PLAYWRIGHT_MICROSERVICE_URL
+        value: https://firecrawl-playwright.onrender.com
+      - key: USE_DB_AUTHENTICATION
+      - key: PORT
+        value: 3002
+      - key: NUM_WORKERS_PER_QUEUE
+      - key: OPENAI_API_KEY
+      - key: OPENAI_BASE_URL
+      - key: MODEL_NAME
+        value: gpt-4o
+      - key: SLACK_WEBHOOK_URL
+      - key: LLAMAPARSE_API_KEY
+      - key: LOGTAIL_KEY
+      - key: BULL_AUTH_KEY
+      - key: TEST_API_KEY
+      - key: POSTHOG_API_KEY
+      - key: POSTHOG_HOST
+      - key: SUPABASE_ANON_TOKEN
+      - key: SUPABASE_URL
+      - key: SUPABASE_SERVICE_TOKEN
+      - key: SCRAPING_BEE_API_KEY
+      - key: HOST
+        value: 0.0.0.0
+      - key: SELF_HOSTED_WEBHOOK_URL
+      - key: LOGGING_LEVEL
+    startCommand: pnpm run start:production
+
+  - name: firecrawl-worker
+    type: worker
+    env: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: firecrawl-redis
+          property: connectionString
+      - key: REDIS_RATE_LIMIT_URL
+        fromService:
+          type: redis
+          name: firecrawl-redis
+          property: connectionString
+      - key: PLAYWRIGHT_MICROSERVICE_URL
+        value: https://firecrawl-playwright.onrender.com
+      # ... (其他环境变量与 firecrawl-api 相同)
+    startCommand: pnpm run workers
+
+  - name: firecrawl-playwright
+    type: web
+    env: docker
+    dockerfilePath: ./apps/playwright-service/Dockerfile
+    dockerContext: ./apps/playwright-service
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: PROXY_SERVER
+      - key: PROXY_USERNAME
+      - key: PROXY_PASSWORD
+      - key: BLOCK_MEDIA
+
+  - name: firecrawl-redis
+    type: redis
+    ipAllowList: []
+    plan: free
+
+databases:
+  - name: firecrawl-db
+    databaseName: firecrawl
+    user: firecrawl
